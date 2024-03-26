@@ -1,9 +1,9 @@
 package service
 
 import (
+	responsehandler "github.com/tanerincode/go-generic-modules/pkg/responseHandler"
+	"github.com/tanerincode/go-generic-modules/pkg/storage"
 	"net/http"
-	responsehandler "tanerincode/go-generic-modules/pkg/responseHandler"
-	"tanerincode/go-generic-modules/pkg/storage"
 )
 
 type HealthCheckService interface {

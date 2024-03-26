@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/lib/pq"
+	"github.com/tanerincode/go-generic-modules/pkg/storage"
 	"log"
 	"os"
 	"strconv"
-	"tanerincode/go-generic-modules/pkg/storage"
 	"time"
 )
 
