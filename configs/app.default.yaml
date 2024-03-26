@@ -1,0 +1,54 @@
+# Server configuration
+server:
+  host: "127.0.0.1"
+  port: 8080
+  timeout:
+    read: 15 # In seconds
+    write: 15
+    idle: 60
+
+# Logging configuration
+logging:
+  level: "info" # Options: debug, info, warn, error, fatal
+  format: "text" # Options: text, json
+
+# Database configuration
+database:
+  type: "postgres" # Options: postgres, mysql, sqlite, etc.
+  host: "localhost"
+  port: 5432
+  user: "user"
+  password: "password"
+  name: "dbname"
+  max_open_conns: 25
+  max_idle_conns: 25
+  conn_max_lifetime: 5 # In minutes
+
+# Authentication configuration
+auth:
+  jwt_secret: "your_jwt_secret" # Replace with your actual JWT secret
+  token_expiry: 24 # Token expiry in hours
+
+# CORS configuration
+cors:
+  allowed_origins: ["*"] # Specify allowed origins
+  allowed_methods: ["GET", "POST", "PUT", "DELETE"]
+  allowed_headers: ["Content-Type", "Authorization"]
+  allow_credentials: false
+  max_age: 300 # In seconds
+
+# Rate limiting configuration
+rate_limiter:
+  requests: 100 # Number of requests
+  duration: 60 # Duration in seconds
+
+# Feature toggles
+features:
+  new_feature: false
+  beta_feature: true
+
+# External responder configuration
+external_services:
+  email_service:
+    api_key: "service_api_key" # Replace with actual API key
+    endpoint: "https://api.emailservice.com/send"
