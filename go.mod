@@ -1,4 +1,4 @@
-module tanerincode/go-generic-modules
+module github.com/tanerincode/go-generic-modules
 
 go 1.22.0
 
