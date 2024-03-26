@@ -1,37 +1,62 @@
 package postgres
 
 import (
-	"context"                                    // Package context defines the Context type, which carries deadlines, cancellation signals, and other request-scoped values across API boundaries and between processes.
-	"database/sql"                               // Package sql provides a generic interface around SQL (or SQL-like) databases.
-	_ "github.com/lib/pq"                        // pq is a pure Go Postgres driver for the database/sql package.
-	"tanerincode/go-generic-modules/pkg/storage" // Importing the storage package which defines the Storage interface.
-	"time"                                       // Package time provides functionality for measuring and displaying time.
+	"context"
+	"database/sql"
+	_ "github.com/lib/pq"
+	"log"
+	"os"
+	"strconv"
+	"tanerincode/go-generic-modules/pkg/storage"
+	"time"
 )
 
-// Postgres is a struct that holds a sql.DB pointer which represents a pool of zero or more underlying connections.
 type Postgres struct {
 	db *sql.DB
 }
 
-// NewPostgres is a function that takes a connection string and returns an implementation of the Storage interface and an error.
-// It opens a new database connection and pings the database to ensure that the connection is live.
 func NewPostgres(connectionString string) (storage.Storage, error) {
 	// Create a new context with a timeout of 5 seconds.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// The cancel function must be called to release resources even if the context is already done.
+	// Always call cancel function to release resources.
 	defer cancel()
 
-	// sql.Open opens a database specified by its database driver name and a driver-specific data source name.
+	// Open a new database connection.
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		// Return nil and the error if there was an issue opening the database.
+		// Log and return the error if there was an issue opening the database.
+		log.Printf("Error opening database: %v", err)
 		return nil, err
 	}
 
-	// PingContext verifies a connection to the database is still alive, establishing a connection if necessary.
+	// Get the maximum number of open connections from the environment variable.
+	maxOpenConns, err := strconv.Atoi(os.Getenv("MAX_OPEN_CONNS"))
+	if err != nil {
+		// Log and return the error if there was an issue converting the environment variable to an integer.
+		log.Printf("Error converting MAX_OPEN_CONNS to integer: %v", err)
+		return nil, err
+	}
+	// Set the maximum number of open connections to the database.
+	db.SetMaxOpenConns(maxOpenConns)
+
+	// Get the maximum number of idle connections from the environment variable.
+	maxIdleConns, err := strconv.Atoi(os.Getenv("MAX_IDLE_CONNS"))
+	if err != nil {
+		// Log and return the error if there was an issue converting the environment variable to an integer.
+		log.Printf("Error converting MAX_IDLE_CONNS to integer: %v", err)
+		return nil, err
+	}
+	// Set the maximum number of idle connections to the database.
+	db.SetMaxIdleConns(maxIdleConns)
+
+	// Set the maximum amount of time a connection may be reused.
+	db.SetConnMaxLifetime(time.Minute * 30)
+
+	// Ping the database to ensure the connection is live.
 	err = db.PingContext(ctx)
 	if err != nil {
-		// Return nil and the error if there was an issue pinging the database.
+		// Log and return the error if there was an issue pinging the database.
+		log.Printf("Error pinging database: %v", err)
 		return nil, err
 	}
 
@@ -39,7 +64,6 @@ func NewPostgres(connectionString string) (storage.Storage, error) {
 	return &Postgres{db: db}, nil
 }
 
-// Disconnect is a method on the Postgres struct that closes the database, releasing any open resources.
 func (p *Postgres) Disconnect() error {
 	return p.db.Close()
 }
