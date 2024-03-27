@@ -23,6 +23,7 @@ database:
   max_open_conns: 25
   max_idle_conns: 25
   conn_max_lifetime: 5 # In minutes
+  ssl_mode: "require"
 
 # Authentication configuration
 auth:

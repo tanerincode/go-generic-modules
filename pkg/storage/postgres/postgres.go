@@ -30,9 +30,10 @@ func NewPostgres() (storage.Storage, error) {
 	maxOpenConns, _ := config.GetConfig("database.max_open_conns").(int)
 	maxIdleConns, _ := config.GetConfig("database.max_idle_conns").(int)
 	connMaxLifetime, _ := config.GetConfig("database.conn_max_lifetime").(int)
+	sslMode, _ := config.GetConfig("database.ssl_mode").(string)
 
 	// Create the connection string.
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, name)
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, name, sslMode)
 
 	// Open a new database connection.
 	db, err := sql.Open("postgres", connectionString)
