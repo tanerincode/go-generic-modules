@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -21,7 +22,12 @@ func Init(configName string) error {
 		viperInstance = viper.New()
 		viperInstance.SetConfigName(configName)
 		viperInstance.SetConfigType("yaml")
+
+		// Set the prefix that Viper looks for with environment variables
+		// and tell Viper to read environment variables that match the config keys.
+		viperInstance.SetEnvPrefix("APP") // It will look for env variables with prefix "APP"
 		viperInstance.AutomaticEnv()
+		viperInstance.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -45,6 +51,18 @@ func Init(configName string) error {
 		}
 	})
 	return initErr
+}
+
+func ResyncEnv() error {
+	// Refresh the environment variables
+	viperInstance.AutomaticEnv()
+
+	// Re-unmarshal the environment variables
+	if err := viperInstance.Unmarshal(AppConfig); err != nil {
+		return fmt.Errorf("unable to re-unmarshal env vars into config: %w", err)
+	}
+
+	return nil
 }
 
 func GetConfig(key string) interface{} {
