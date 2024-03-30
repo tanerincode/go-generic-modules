@@ -8,6 +8,7 @@ import (
 	"github.com/tanerincode/go-generic-modules/pkg/config"
 	"github.com/tanerincode/go-generic-modules/pkg/storage"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -23,14 +24,20 @@ func NewPostgres() (storage.Storage, error) {
 
 	// Get the database configuration values from the config.
 	host, _ := config.GetConfig("database.host").(string)
-	port, _ := config.GetConfig("database.port").(int)
+	portStr, _ := config.GetConfig("database.port").(string)
 	user, _ := config.GetConfig("database.user").(string)
 	password, _ := config.GetConfig("database.password").(string)
 	name, _ := config.GetConfig("database.name").(string)
-	maxOpenConns, _ := config.GetConfig("database.max_open_conns").(int)
-	maxIdleConns, _ := config.GetConfig("database.max_idle_conns").(int)
-	connMaxLifetime, _ := config.GetConfig("database.conn_max_lifetime").(int)
 	sslMode, _ := config.GetConfig("database.ssl_mode").(string)
+
+	maxOpenConnsString, _ := config.GetConfig("database.max_open_conns").(string)
+	maxIdleConnsString, _ := config.GetConfig("database.max_idle_conns").(string)
+	connMaxLifetimeString, _ := config.GetConfig("database.conn_max_lifetime").(string)
+
+	port, _ := strconv.Atoi(portStr)
+	maxOpenConns, _ := strconv.Atoi(maxOpenConnsString)
+	maxIdleConns, _ := strconv.Atoi(maxIdleConnsString)
+	connMaxLifetime, _ := strconv.Atoi(connMaxLifetimeString)
 
 	// Create the connection string.
 	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, name, sslMode)
