@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 	"github.com/tanerincode/go-generic-modules/pkg/config"
 	"github.com/tanerincode/go-generic-modules/pkg/storage"
@@ -13,7 +13,7 @@ import (
 )
 
 type Postgres struct {
-	db *sql.DB
+	Db *pgxpool.Pool
 }
 
 func NewPostgres() (storage.Storage, error) {
@@ -40,27 +40,33 @@ func NewPostgres() (storage.Storage, error) {
 	connMaxLifetime, _ := strconv.Atoi(connMaxLifetimeString)
 
 	// Create the connection string.
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, name, sslMode)
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", user, password, host, port, name, sslMode)
 
-	// Open a new database connection.
-	db, err := sql.Open("postgres", connectionString)
+	// Create a new config for the connection pool.
+	config, err := pgxpool.ParseConfig(connectionString)
+	if err != nil {
+		log.Printf("Error parsing config: %v", err)
+		return nil, err
+	}
+
+	// Set the maximum number of open connections to the database.
+	config.MaxConns = int32(maxOpenConns)
+
+	// Set the maximum number of idle connections to the database.
+	config.MinConns = int32(maxIdleConns)
+
+	// Set the maximum amount of time a connection may be reused.
+	config.MaxConnLifetime = time.Duration(connMaxLifetime) * time.Minute
+
+	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		// Log and return the error if there was an issue opening the database.
 		log.Printf("Error opening database: %v", err)
 		return nil, err
 	}
 
-	// Set the maximum number of open connections to the database.
-	db.SetMaxOpenConns(maxOpenConns)
-
-	// Set the maximum number of idle connections to the database.
-	db.SetMaxIdleConns(maxIdleConns)
-
-	// Set the maximum amount of time a connection may be reused.
-	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Minute)
-
 	// Ping the database to ensure the connection is live.
-	err = db.PingContext(ctx)
+	err = db.Ping(ctx)
 	if err != nil {
 		// Log and return the error if there was an issue pinging the database.
 		log.Printf("Error pinging database: %v", err)
@@ -68,9 +74,10 @@ func NewPostgres() (storage.Storage, error) {
 	}
 
 	// Return a new Postgres struct with the db and nil for the error.
-	return &Postgres{db: db}, nil
+	return &Postgres{Db: db}, nil
 }
 
 func (p *Postgres) Disconnect() error {
-	return p.db.Close()
+	p.Db.Close()
+	return nil
 }
